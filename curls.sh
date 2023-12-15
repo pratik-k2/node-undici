@@ -62,3 +62,16 @@ curl -X PUT -H 'Content-Type: application/json' -d '{"name": "Subject4", "age": 
 
 #DELETE request
 curl -X DELETE 'http://localhost:3000/stream/records/4'
+
+# ================
+# Curls for ssrf
+# ================
+
+# request
+curl 'http://localhost:3000/ssrf/request?payload=http://www.google.com'
+
+# request
+curl 'http://localhost:3000/ssrf/fetch?payload=http://www.google.com'
+
+# request
+curl 'http://localhost:3000/ssrf/stream?payload=http://www.google.com'

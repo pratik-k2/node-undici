@@ -138,7 +138,7 @@ app.get("/stream/records/:id", async (req, res) => {
     }, ({ statusCode, headers, opaque: { bufs } }) => {
       console.log(`response received ${statusCode}`)
       return new Writable({
-        write (chunk, encoding, callback) {
+        write(chunk, encoding, callback) {
           bufs.push(chunk)
           callback()
         }
@@ -164,7 +164,7 @@ app.post("/stream/records/:id", async (req, res) => {
     }, ({ statusCode, headers, opaque: { bufs } }) => {
       console.log(`response received ${statusCode}`)
       return new Writable({
-        write (chunk, encoding, callback) {
+        write(chunk, encoding, callback) {
           bufs.push(chunk)
           callback()
         }
@@ -191,7 +191,7 @@ app.put("/stream/records/:id", async (req, res) => {
     }, ({ statusCode, headers, opaque: { bufs } }) => {
       console.log(`response received ${statusCode}`)
       return new Writable({
-        write (chunk, encoding, callback) {
+        write(chunk, encoding, callback) {
           bufs.push(chunk)
           callback()
         }
@@ -213,7 +213,7 @@ app.delete("/stream/records/:id", async (req, res) => {
     }, ({ statusCode, headers, opaque: { bufs } }) => {
       console.log(`response received ${statusCode}`)
       return new Writable({
-        write (chunk, encoding, callback) {
+        write(chunk, encoding, callback) {
           bufs.push(chunk)
           callback()
         }
@@ -237,7 +237,7 @@ app.get("/fetch/records/:id", async (req, res) => {
 
 app.post("/fetch/records/:id", async (req, res) => {
   try {
-    const response = await fetch(`http://localhost:4000/records/${req.params.id}`,{
+    const response = await fetch(`http://localhost:4000/records/${req.params.id}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -254,7 +254,7 @@ app.post("/fetch/records/:id", async (req, res) => {
 
 app.put("/fetch/records/:id", async (req, res) => {
   try {
-    const response = await fetch(`http://localhost:4000/records/${req.params.id}`,{
+    const response = await fetch(`http://localhost:4000/records/${req.params.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -270,11 +270,59 @@ app.put("/fetch/records/:id", async (req, res) => {
 
 app.delete("/fetch/records/:id", async (req, res) => {
   try {
-    const response = await fetch(`http://localhost:4000/records/${req.params.id}`,{
+    const response = await fetch(`http://localhost:4000/records/${req.params.id}`, {
       method: "DELETE",
     });
     const deletedRecord = await response.json();
     res.send(deletedRecord);
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+app.get("/ssrf/request", async (req, res) => {
+  try {
+    console.log(req.query.payload)
+    const client1 = new Client(req.query.payload);
+    const response = await client1.request({
+      path: '/',
+      method: "GET",
+    });
+    const result = await response.body.text();
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+app.get("/ssrf/fetch", async (req, res) => {
+  try {
+    const response = await fetch(req.query.payload);
+    const result = await response.text();
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+app.get("/ssrf/stream", async (req, res) => {
+  try {
+    const bufs = []
+    const client1 = new Client(req.query.payload);
+    await client1.stream({
+      path: '/',
+      method: "GET",
+      opaque: { bufs }
+    }, ({ statusCode, headers, opaque: { bufs } }) => {
+      console.log(`response received ${statusCode}`)
+      return new Writable({
+        write(chunk, encoding, callback) {
+          bufs.push(chunk)
+          callback()
+        }
+      })
+    })
+    res.send(Buffer.concat(bufs).toString('utf-8'));
   } catch (err) {
     console.error(err);
   }
